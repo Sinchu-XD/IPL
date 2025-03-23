@@ -65,31 +65,37 @@ async def send_welcome(client, message):
     else:
         await message.reply_text("No Live coverage going on!! \n-----BYE----")
 
-@app.on_message(filters.command("upcoming"))
-async def upcoming_matches(client, message):
+IPL_SCHEDULE_URL = "https://www.cricbuzz.com/cricket-series/7548/indian-premier-league-2024/matches"
+
+@app.on_message(filters.command("ipl"))
+async def upcoming_ipl_matches(client, message):
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
-        
-        response = requests.get(CRICBUZZ_URL, headers=headers, timeout=10)
-        
+
+        response = requests.get(IPL_SCHEDULE_URL, headers=headers, timeout=10)
+
         if response.status_code != 200:
-            await message.reply_text(f"Failed to fetch upcoming matches. Status Code: {response.status_code}")
+            await message.reply_text(f"Failed to fetch IPL matches. Status Code: {response.status_code}")
             return
 
         soup = BeautifulSoup(response.text, "html.parser")
-        matches = soup.find_all("h2", class_="cb-lv-scr-mtch-hdr")
+        matches = soup.find_all("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr")[:10]  # Get top 10 matches
 
-        upcoming_matches = [match.text.strip() for match in matches[:10]]  # Get top 10 matches
+        upcoming_matches = []
+        for match in matches:
+            teams = match.find("h2").text.strip() if match.find("h2") else "Unknown Match"
+            details = match.find("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr").text.strip() if match.find("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr") else "Unknown Details"
+            upcoming_matches.append(f"{teams} - {details}")
 
         if upcoming_matches:
-            await message.reply_text("Upcoming Matches:\n" + "\n".join(upcoming_matches))
+            await message.reply_text("Upcoming IPL Matches:\n" + "\n".join(upcoming_matches))
         else:
-            await message.reply_text("No upcoming matches found.")
+            await message.reply_text("No upcoming IPL matches found.")
 
     except requests.exceptions.RequestException as e:
-        await message.reply_text("Error fetching upcoming matches.")
+        await message.reply_text("Error fetching IPL matches.")
         print(f"Error: {e}")
 
 
