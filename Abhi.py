@@ -1,90 +1,111 @@
-import requests
+import os
 import asyncio
-from pyrogram import Client, filters
+import requests
+from pyrofork import Client
 
-# ✅ Replace with your bot token & API key
-BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
-CRICKET_API_KEY = ""
-CHAT_ID = -1002209504301  # ✅ Replace with your Group/Channel ID
+# 🔥 Replace with your credentials
+API_ID = 123456  # Get from my.telegram.org
+API_HASH = "abcdef1234567890abcdef1234567890"
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+CRICKET_API_KEY = "9a7a66e7-f1d5-4899-ad9f-21a1a172f58e"  # Replace with a valid cricket API key
 
-# ✅ Initialize Pyrofork bot
-app = Client("IPLBot", bot_token=BOT_TOKEN)
+app = Client("IPL_LiveBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# ✅ Cricket API URLs (Modify as per your provider)
-MATCHES_URL = f"https://api.cricapi.com/v1/currentMatches?apikey={CRICKET_API_KEY}&offset=0"
-COMMENTARY_URL = "https://api.cricapi.com/v1/match_commentary?apikey={}&id={}"
+# 🌍 Cricket API URLs
+MATCHES_API = f"https://api.cricapi.com/v1/currentMatches?apikey={CRICKET_API_KEY}"
+COMMENTARY_API = "https://api.cricapi.com/v1/match_commentary?apikey={}&id={}"
 
-previous_status = ""  # ✅ To prevent duplicate updates
+# 🔴 Target Telegram Chat (Replace with your group/channel ID)
+CHAT_ID = -100123456789  
 
-async def get_live_ipl_score():
-    """Fetches live IPL scores from API."""
-    global previous_status
+# ⚡ Interval for auto-updates (in seconds)
+UPDATE_INTERVAL = 30  
+
+latest_ball = ""
+
+async def get_live_match():
+    """ Fetches the latest IPL match details """
     try:
-        response = requests.get(MATCHES_URL).json()
-        if not response.get("data"):
-            return "⚠️ No live IPL matches found!"
+        response = requests.get(MATCHES_API)
+        data = response.json()
 
-        match_data = ""
-        for match in response["data"]:
-            if "Indian Premier League" in match["name"]:  # ✅ Filter IPL Matches
-                match_id = match["id"]
-                team1 = match["teams"][0]
-                team2 = match["teams"][1]
-                status = match["status"]
-                score = match.get("score", [])
+        if "error" in data or "data" not in data:
+            return None, "❌ Unable to fetch live match details!"
 
-                team1_score = f"{team1}: {score[0]['runs']}/{score[0]['wickets']} ({score[0]['overs']} overs)" if score else f"{team1}: Yet to bat"
-                team2_score = f"{team2}: {score[1]['runs']}/{score[1]['wickets']} ({score[1]['overs']} overs)" if len(score) > 1 else f"{team2}: Yet to bat"
-
-                commentary = await get_live_commentary(match_id)
-
-                match_text = f"🏏 **{team1} vs {team2}**\n📊 {team1_score}\n📊 {team2_score}\n🔴 Status: {status}\n\n{commentary}"
-
-                if match_text != previous_status:  # ✅ Prevents duplicate messages
-                    previous_status = match_text
-                    return match_text
-                else:
-                    return None  # ✅ No new updates, so don't send anything
-
-        return None  # ✅ No live matches
-
+        for match in data["data"]:
+            if "Indian Premier League" in match.get("name", ""):
+                return match, None
+        return None, "No live IPL matches found!"
+    
     except Exception as e:
-        return f"❌ Error fetching score: {e}"
+        return None, f"❌ Error fetching match: {e}"
 
-async def get_live_commentary(match_id):
-    """Fetches live commentary for a given match ID."""
+async def get_ball_by_ball(match_id):
+    """ Fetches live ball-by-ball commentary """
     try:
-        response = requests.get(COMMENTARY_URL.format(CRICKET_API_KEY, match_id)).json()
-        if not response.get("data"):
-            return "🔴 **No live commentary available.**"
+        response = requests.get(COMMENTARY_API.format(CRICKET_API_KEY, match_id))
+        data = response.json()
 
-        commentary_list = response["data"]["commentary"]
-        latest_ball = commentary_list[0]["comment"] if commentary_list else "🎤 No latest ball update yet."
+        if "error" in data or "data" not in data:
+            return "📢 No live commentary available!"
 
-        return f"🎙 **Latest Ball:** {latest_ball}"
+        global latest_ball
+        commentary = data["data"]["commentary"]
+        
+        if not commentary:
+            return "📢 No live commentary yet!"
+
+        latest_update = commentary[0]["text"] if commentary else "No new updates."
+
+        if latest_update != latest_ball:
+            latest_ball = latest_update
+            return f"🏏 **Latest Ball:** {latest_update}"
+        return None
 
     except Exception as e:
         return f"❌ Error fetching commentary: {e}"
 
-async def auto_send_scores():
-    """Automatically sends IPL scores every minute in a specific chat."""
+async def send_live_updates():
+    """ Sends live match updates automatically """
     while True:
-        score_update = await get_live_ipl_score()
-        if score_update:
-            await app.send_message(CHAT_ID, score_update)
-        await asyncio.sleep(60)  # ✅ Updates every 60 seconds
+        try:
+            match, error = await get_live_match()
+            if error:
+                await app.send_message(CHAT_ID, error)
+                await asyncio.sleep(UPDATE_INTERVAL)
+                continue
 
-# ✅ Start bot
-@app.on_message(filters.command("start"))
-async def start(client, message):
-    """Start message when bot is initiated."""
-    await message.reply_text("🏏 **Welcome to IPL Live Score Bot!**\nThis bot sends live IPL updates automatically.")
+            match_id = match["id"]
+            team1 = match["teams"][0]
+            team2 = match["teams"][1]
+            status = match.get("status", "Match Not Started")
 
-# ✅ Run auto-updater in the background
+            team1_score = f"{match['score'][0]['runs']}/{match['score'][0]['wickets']} ({match['score'][0]['overs']} ov)"
+            team2_score = f"{match['score'][1]['runs']}/{match['score'][1]['wickets']} ({match['score'][1]['overs']} ov)"
+
+            match_info = (
+                f"🏏 **{team1} vs {team2}**\n"
+                f"📊 **Status:** {status}\n\n"
+                f"🔹 {team1}: {team1_score}\n"
+                f"🔹 {team2}: {team2_score}\n"
+            )
+
+            commentary = await get_ball_by_ball(match_id)
+            
+            if commentary:
+                await app.send_message(CHAT_ID, f"{match_info}\n\n{commentary}")
+
+        except Exception as e:
+            print(f"Error sending updates: {e}")
+
+        await asyncio.sleep(UPDATE_INTERVAL)  # Wait before sending the next update
+
 async def main():
+    """ Start the bot and send updates """
     await app.start()
-    await asyncio.create_task(auto_send_scores())  # ✅ Auto-fetch scores & commentary
-    await app.idle()
+    print("✅ Bot Started Successfully!")
+    await send_live_updates()
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
