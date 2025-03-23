@@ -1,6 +1,6 @@
 import asyncio
 import requests
-from pyrofork import Client
+from pyrogram import Client
 from pyrogram.types import Message
 
 # ✅ Telegram API Credentials
