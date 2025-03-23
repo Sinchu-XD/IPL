@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 
 # ✅ Replace with your bot token & API key
 BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
-CRICKET_API_KEY = 
+CRICKET_API_KEY = ""
 CHAT_ID = -1002209504301  # ✅ Replace with your Group/Channel ID
 
 # ✅ Initialize Pyrofork bot
