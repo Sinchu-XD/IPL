@@ -64,6 +64,23 @@ async def send_welcome(client, message):
     else:
         await message.reply_text("No Live coverage going on!! \n-----BYE----")
 
+@app.on_message(filters.command("upcoming"))
+async def upcoming_matches(client, message):
+    try:
+        response = requests.get("https://hs-consumer-api.espncricinfo.com/v1/pages/matches/current?latest=false", timeout=10)
+        if response.status_code == 200 and response.text.strip():
+            data = response.json()
+            upcoming_matches = [f"{m['series']['name']} - {m['teams'][0]['team']['name']} vs {m['teams'][1]['team']['name']}" for m in data.get('matches', []) if m.get('status') == 'Upcoming']
+            if upcoming_matches:
+                await message.reply_text("Upcoming Matches:\n" + "\n".join(upcoming_matches))
+            else:
+                await message.reply_text("No upcoming matches found.")
+        else:
+            await message.reply_text("Failed to fetch upcoming matches.")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching upcoming matches: {e}")
+        await message.reply_text("Error fetching upcoming matches.")
+
 @app.on_message(filters.text)
 async def send_live_scores(client, message):
     if message.text.lower().startswith("live"):
