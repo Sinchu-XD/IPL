@@ -68,15 +68,23 @@ async def send_welcome(client, message):
 async def upcoming_matches(client, message):
     try:
         response = requests.get("https://hs-consumer-api.espncricinfo.com/v1/pages/matches/current?latest=false", timeout=10)
+        
         if response.status_code == 200 and response.text.strip():
             data = response.json()
-            upcoming_matches = [f"{m['series']['name']} - {m['teams'][0]['team']['name']} vs {m['teams'][1]['team']['name']}" for m in data.get('matches', []) if m.get('status') == 'Upcoming']
+            print("API Response:", data)  # Debugging
+            
+            upcoming_matches = [
+                f"{m['series']['name']} - {m['teams'][0]['team']['name']} vs {m['teams'][1]['team']['name']}"
+                for m in data.get('matches', []) if m.get('status') == 'Upcoming'
+            ]
+            
             if upcoming_matches:
                 await message.reply_text("Upcoming Matches:\n" + "\n".join(upcoming_matches))
             else:
                 await message.reply_text("No upcoming matches found.")
         else:
-            await message.reply_text("Failed to fetch upcoming matches.")
+            await message.reply_text(f"Failed to fetch upcoming matches. Status Code: {response.status_code}")
+
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching upcoming matches: {e}")
         await message.reply_text("Error fetching upcoming matches.")
