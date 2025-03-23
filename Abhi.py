@@ -6,12 +6,13 @@ API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
 BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
 
-bot = Client("IPLBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+
+
+bot = Client("CricbuzzBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 CRICBUZZ_URL = "https://www.cricbuzz.com/cricket-match/live-scores"
 
-
-def get_matches():
+async def get_matches():
     response = requests.get(CRICBUZZ_URL)
     soup = BeautifulSoup(response.text, 'html.parser')
     
@@ -30,10 +31,9 @@ def get_matches():
     
     return live_matches, completed_matches
 
-
 @bot.on_message(filters.command("matches"))
-def send_matches(client, message):
-    live_matches, completed_matches = get_matches()
+async def send_matches(client, message):
+    live_matches, completed_matches = await get_matches()
     
     response_text = "**🏏 Live & Completed Matches**\n\n"
     
@@ -47,7 +47,6 @@ def send_matches(client, message):
     else:
         response_text += "No recently completed matches.\n\n"
     
-    message.reply_text(response_text, disable_web_page_preview=True)
-
+    await message.reply_text(response_text, disable_web_page_preview=True)
 
 bot.run()
