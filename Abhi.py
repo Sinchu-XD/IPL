@@ -1,7 +1,7 @@
 import asyncio
 import requests
-from pyrofork import Client
-from pyrofork.types import Message
+from pyrogram import Client
+from pyrogram.types import Message
 
 # 🚀 Replace with your own API credentials
 API_KEY = "814d366d83msh97b8ba89155c2a8p140352jsn4c9a3b3bb565"
