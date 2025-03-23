@@ -1,6 +1,6 @@
 import asyncio
 import requests
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import Message
 
 # 🚀 Replace with your own API credentials
