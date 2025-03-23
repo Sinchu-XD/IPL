@@ -4,6 +4,7 @@ import sys
 import time
 import requests
 import asyncio
+from bs4 import BeautifulSoup
 from pyrogram import Client, filters
 
 # Configure logging
@@ -67,26 +68,25 @@ async def send_welcome(client, message):
 @app.on_message(filters.command("upcoming"))
 async def upcoming_matches(client, message):
     try:
-        url = "https://www.cricbuzz.com/api/cricket-match/upcoming"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
         
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(CRICBUZZ_URL, headers=headers, timeout=10)
         
-        if response.status_code == 200 and response.text.strip():
-            data = response.json()
-            upcoming_matches = [
-                f"{match['seriesName']} - {match['team1']['teamName']} vs {match['team2']['teamName']} on {match['matchStartDate']}"
-                for match in data.get("matches", []) if match.get("matchStartDate")
-            ]
-            
-            if upcoming_matches:
-                await message.reply_text("Upcoming Matches:\n" + "\n".join(upcoming_matches))
-            else:
-                await message.reply_text("No upcoming matches found.")
-        else:
+        if response.status_code != 200:
             await message.reply_text(f"Failed to fetch upcoming matches. Status Code: {response.status_code}")
+            return
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        matches = soup.find_all("h2", class_="cb-lv-scr-mtch-hdr")
+
+        upcoming_matches = [match.text.strip() for match in matches[:10]]  # Get top 10 matches
+
+        if upcoming_matches:
+            await message.reply_text("Upcoming Matches:\n" + "\n".join(upcoming_matches))
+        else:
+            await message.reply_text("No upcoming matches found.")
 
     except requests.exceptions.RequestException as e:
         await message.reply_text("Error fetching upcoming matches.")
