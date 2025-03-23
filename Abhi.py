@@ -13,7 +13,7 @@ CHAT_ID = -1002209504301
 
 app = Client("IPL_LiveBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-from pyrofork.enums import ParseMode
+from pyrogram.enums import ParseMode
 
 
 
