@@ -10,7 +10,7 @@ API_URL = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}"
 # 🏏 Telegram Bot Credentials
 API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
-BOT_TOKEN = "7726535663:AAGAlIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
+BOT_TOKEN = "7726535663:AAFI5nfBVIOJF_34ZDfe0zHQyViGDGLkP5A"
 
 # 📲 Start Bot
 app = Client("Abhi", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
