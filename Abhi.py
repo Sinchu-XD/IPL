@@ -1,7 +1,7 @@
 import os
 import asyncio
 import requests
-from pyrofork import Client
+from pyrogram import Client
 
 # 🔥 Replace with your credentials
 API_ID = 25024171  # Get from my.telegram.org
