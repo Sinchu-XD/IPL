@@ -13,7 +13,7 @@ API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
 BOT_TOKEN = "7726535663:AAGAlIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
 
 # 📲 Start Bot
-app = Client("IPLBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("Abhi", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 # 📡 Function to fetch live match updates
 async def fetch_ipl_score():
