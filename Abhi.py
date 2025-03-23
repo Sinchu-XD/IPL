@@ -4,9 +4,9 @@ import requests
 from pyrofork import Client
 
 # 🔥 Replace with your credentials
-API_ID = 123456  # Get from my.telegram.org
-API_HASH = "abcdef1234567890abcdef1234567890"
-BOT_TOKEN = "YOUR_BOT_TOKEN"
+API_ID = 25024171  # Get from my.telegram.org
+API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
+BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
 CRICKET_API_KEY = "9a7a66e7-f1d5-4899-ad9f-21a1a172f58e"  # Replace with a valid cricket API key
 
 app = Client("IPL_LiveBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
