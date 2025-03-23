@@ -3,19 +3,19 @@ import requests
 from pyrogram import Client, filters, idle
 from pyrogram.types import Message
 
-# 🚀 Replace with your own API credentials
-API_KEY = "814d366d83msh97b8ba89155c2a8p140352jsn4c9a3b3bb565"
-API_URL = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}"
+# 🚀 Replace with your own CricAPI Key
+API_KEY = "9a7a66e7-f1d5-4899-ad9f-21a1a172f58e"
+API_URL = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}&offset=0"
 
 # 🏏 Telegram Bot Credentials
 API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
-BOT_TOKEN = "7726535663:AAFI5nfBVIOJF_34ZDfe0zHQyViGDGLkP5A"
+BOT_TOKEN = "7726535663:AAGAlIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
 
-# 📲 Start Bot
-app = Client("Abhi", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+# 📲 Start the Telegram bot
+app = Client("IPLBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# 📡 Function to fetch live match updates
+# 🔄 Function to fetch live IPL score
 async def fetch_ipl_score():
     try:
         response = requests.get(API_URL)
@@ -28,11 +28,12 @@ async def fetch_ipl_score():
             return "❌ No live IPL matches found!"
 
         for match in data["data"]:
-            if "Indian Premier League" in match.get("name", ""):
+            if "Indian Premier League" in match.get("series", {}).get("name", ""):
                 teams = f"🏏 {match['teams'][0]} 🆚 {match['teams'][1]}"
                 status = match.get("status", "Live")
                 score = ""
 
+                # Get ball-by-ball updates
                 if "score" in match and match["score"]:
                     for innings in match["score"]:
                         score += f"📊 **{innings['inning']}**: {innings['runs']}/{innings['wickets']} in {innings['overs']} overs\n"
@@ -44,7 +45,7 @@ async def fetch_ipl_score():
     except Exception as e:
         return f"⚠️ Error fetching score: {e}"
 
-# 🔄 Function to send automatic updates
+# 🔄 Function to send automatic live updates
 async def send_live_updates():
     chat_id = -1002209504301  # Replace with your group/channel ID
     last_message = ""
