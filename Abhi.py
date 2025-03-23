@@ -10,13 +10,13 @@ from pyrogram import Client, filters
 logging.basicConfig(level=logging.INFO)
 
 # Your API credentials
-API_ID = 25024171  # Get from my.telegram.org
-API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
-BOT_TOKEN = "7726535663:AAFVBNgn5z-gUK7Tr7XoKTS3bopW3OLBSPM"
-CHAT_ID = -4752836661
+API_ID = "YOUR_API_ID"
+API_HASH = "YOUR_API_HASH"
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+CHAT_ID = "YOUR_CHAT_ID"
 
 # Initialize Pyrogram Client
-app = Client("IPLBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("cricket_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 interrupted = False
 
@@ -38,13 +38,22 @@ def wait_time(g_time):
             break
 
 def batsman_data(r):
-    return [f"{b['player']['battingName']} {b['runs']}({b['balls']})" for b in r['supportInfo']['liveSummary']['batsmen']]
+    return [f"{b['player']['battingName']} {b['runs']}({b['balls']})" for b in r['supportInfo']['liveSummary'].get('batsmen', [])]
 
 def bowler_data(r):
-    return [f"{b['player']['battingName']} {b['overs']}-{b['maidens']}-{b['conceded']}-{b['wickets']}" for b in r['supportInfo']['liveSummary']['bowlers']]
+    return [f"{b['player']['battingName']} {b['overs']}-{b['maidens']}-{b['conceded']}-{b['wickets']}" for b in r['supportInfo']['liveSummary'].get('bowlers', [])]
 
-url = requests.get("https://hs-consumer-api.espncricinfo.com/v1/pages/matches/current?latest=true").json()
-matches_detail = [[m['scribeId'], m['slug'], m['series']['objectId'], m['series']['slug']] for m in url['matches'] if m['status'] == 'Live']
+try:
+    response = requests.get("https://hs-consumer-api.espncricinfo.com/v1/pages/matches/current?latest=true", timeout=10)
+    if response.status_code == 200 and response.text.strip():
+        url = response.json()
+        matches_detail = [[m['scribeId'], m['slug'], m['series']['objectId'], m['series']['slug']] for m in url.get('matches', []) if m.get('status') == 'Live']
+    else:
+        matches_detail = []
+except requests.exceptions.RequestException as e:
+    logging.error(f"Request failed: {e}")
+    matches_detail = []
+
 matches_detail_str = "\n".join([f"live{i+1} --> {m[1]}" for i, m in enumerate(matches_detail)])
 
 @app.on_message(filters.command(["start", "help"]))
@@ -69,28 +78,31 @@ async def send_live_scores(client, message):
         await message.reply_text(f"Fetching live updates: {select_match_url}")
         cache = []
         while True:
-            url = f"https://hs-consumer-api.espncricinfo.com/v1/pages/match/details?seriesId={matches_detail[a-1][2]}&matchId={matches_detail[a-1][0]}&latest=true"
-            r = requests.get(url).json()
-            if 'recentBallCommentary' in r and r['recentBallCommentary']:
-                recent_ball = r['recentBallCommentary']['ballComments'][0]
-                four, six, wicket = 'Four Runs ' if recent_ball['isFour'] else '', 'SIX Runs ' if recent_ball['isSix'] else '', 'OUT ' if recent_ball['isWicket'] else ''
-                if recent_ball['oversActual'] not in cache:
-                    cache.append(recent_ball['oversActual'])
-                    recent = f"{recent_ball['oversActual']} {recent_ball['title']}, {four}{six}{wicket}"
-                    await client.send_message(CHAT_ID, recent)
-                    if str(recent_ball['oversActual']).endswith('.6'):
-                        batsman_info, bowler_info = batsman_data(r), bowler_data(r)
-                        output = f"{recent_ball['over']['team']['abbreviation']} - {recent_ball['over']['totalRuns']}/{recent_ball['over']['totalWickets']}\n"
-                        output += f"{recent_ball['over']['overRuns']} runs * {recent_ball['over']['overWickets']} wckts\n"
-                        output += f"batting=> {' || '.join(batsman_info)}\n"
-                        output += f"bowling=> {' || '.join(bowler_info)}"
-                        await client.send_message(CHAT_ID, output)
-                    await asyncio.sleep(40)
+            try:
+                url = f"https://hs-consumer-api.espncricinfo.com/v1/pages/match/details?seriesId={matches_detail[a-1][2]}&matchId={matches_detail[a-1][0]}&latest=true"
+                r = requests.get(url, timeout=10).json()
+                if 'recentBallCommentary' in r and r['recentBallCommentary']:
+                    recent_ball = r['recentBallCommentary']['ballComments'][0]
+                    four, six, wicket = 'Four Runs ' if recent_ball['isFour'] else '', 'SIX Runs ' if recent_ball['isSix'] else '', 'OUT ' if recent_ball['isWicket'] else ''
+                    if recent_ball['oversActual'] not in cache:
+                        cache.append(recent_ball['oversActual'])
+                        recent = f"{recent_ball['oversActual']} {recent_ball['title']}, {four}{six}{wicket}"
+                        await client.send_message(CHAT_ID, recent)
+                        if str(recent_ball['oversActual']).endswith('.6'):
+                            batsman_info, bowler_info = batsman_data(r), bowler_data(r)
+                            output = f"{recent_ball['over']['team']['abbreviation']} - {recent_ball['over']['totalRuns']}/{recent_ball['over']['totalWickets']}\n"
+                            output += f"{recent_ball['over']['overRuns']} runs * {recent_ball['over']['overWickets']} wckts\n"
+                            output += f"batting=> {' || '.join(batsman_info)}\n"
+                            output += f"bowling=> {' || '.join(bowler_info)}"
+                            await client.send_message(CHAT_ID, output)
+                        await asyncio.sleep(40)
+                    else:
+                        await asyncio.sleep(30)
                 else:
-                    await asyncio.sleep(30)
-            else:
-                await message.reply_text("No Live commentary available for this match")
+                    await message.reply_text("No Live commentary available for this match")
+            except requests.exceptions.RequestException as e:
+                logging.error(f"Error fetching match details: {e}")
+                await asyncio.sleep(30)
 
 if __name__ == "__main__":
     app.run()
-    
