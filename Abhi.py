@@ -1,79 +1,85 @@
 import asyncio
-import requests
-from pyrogram import Client, filters, idle
+import logging
+from pycricbuzz import Cricbuzz
+from pyrogram import Client, filters
 from pyrogram.types import Message
 
-# 🚀 Replace with your own API credentials
-API_KEY = "9a7a66e7-f1d5-4899-ad9f-21a1a172f58e"
-API_URL = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}"
+# Configure logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# 🏏 Telegram Bot Credentials
+# Bot Configuration
 API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
-BOT_TOKEN = "7726535663:AAFI5nfBVIOJF_34ZDfe0zHQyViGDGLkP5A"
+BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
 
-# 📲 Start Bot
 app = Client("IPLBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# 📡 Function to fetch live match updates
-async def fetch_ipl_score():
-    try:
-        response = requests.get(API_URL)
-        data = response.json()
-
-        if "data" not in data or not data["data"]:
-            return "❌ No live IPL matches found!"
-
-        for match in data["data"]:
-            # ✅ Improved Match Detection
-            if "Indian Premier League" in match.get("series", {}).get("name", ""):
-                teams = f"{match['teamInfo'][0]['name']} 🆚 {match['teamInfo'][1]['name']}"
-                status = match.get("status", "Live")
-                score = ""
-
-                if "score" in match and match["score"]:
-                    for innings in match["score"]:
-                        score += f"🏏 **{innings['inning']}**: {innings['runs']}/{innings['wickets']} in {innings['overs']} overs\n"
-
-                return f"🏏 **LIVE IPL MATCH**\n📢 {teams}\n📊 {status}\n{score}"
-
-        return "❌ No live IPL matches found!"
+def refresh():
+    c = Cricbuzz()
+    match = c.matches()
+    if not match:
+        return None
     
-    except Exception as e:
-        return f"⚠️ Error fetching score: {e}"
+    mid = match[0]['id']
+    result = {
+        'matches': match[0],
+        'livescore': c.livescore(mid=mid),
+        'scorecard': c.scorecard(mid=mid),
+        'matchinfo': c.matchinfo(mid=mid),
+        'commentary': c.commentary(mid=mid)
+    }
+    return result
 
-# 🔄 Function to send automatic updates
-async def send_live_updates():
-    chat_id = -1002209504301  # Replace with your group/channel ID
-    last_message = ""
-
-    while True:
-        score_update = await fetch_ipl_score()
-
-        if score_update != last_message:
-            await app.send_message(chat_id, score_update)
-            last_message = score_update
-        
-        await asyncio.sleep(30)  # ⏳ Check every 30 seconds
-
-# 🎯 Start Command (for manual check)
 @app.on_message(filters.command("start"))
-async def start(client, message: Message):
-    await message.reply("🏏 **IPL Live Score Bot Started!**\nI will update scores automatically.")
+async def start(client: Client, message: Message):
+    await message.reply_text("Welcome to Cricket Bot!\n\nUse /info to get match information\nUse /score to get the live score")
 
-# 🎯 Manual Score Check
 @app.on_message(filters.command("score"))
-async def score(client, message: Message):
-    score_update = await fetch_ipl_score()
-    await message.reply(score_update)
+async def score(client: Client, message: Message):
+    result = refresh()
+    if not result:
+        await message.reply_text("No live matches available.")
+        return
+    
+    try:
+        batsman1 = result['livescore']['batting']['batsman'][0]
+        batsman2 = result['livescore']['batting']['batsman'][1]
+        bowler = result['livescore']['bowling']['bowler'][0]
+        scorecard = result['scorecard']['scorecard'][0]
 
-# 🚀 Main Function
-async def main():
-    print("🏏 IPL Bot is running...")
-    await app.start()
-    asyncio.create_task(send_live_updates())  # Start auto-updates
-    await idle()
+        text = (f"Batting: {scorecard['batteam']}\n"
+                f"Score: {scorecard['runs']}/{scorecard['wickets']}\n"
+                f"Overs: {scorecard['overs']}\n"
+                f"{batsman1['name']}: {batsman1['runs']} ({batsman1['balls']})\n"
+                f"{batsman2['name']}: {batsman2['runs']} ({batsman2['balls']})\n\n"
+                f"Bowling: {scorecard['bowlteam']}\n"
+                f"{bowler['name']}: {bowler['wickets']}-{bowler['runs']} ({bowler['overs']})\n\n"
+                f"Commentary: {result['commentary']['commentary'][0]['comm']}")
 
+        await message.reply_text(text)
+    except KeyError:
+        await message.reply_text("Unable to fetch live scores at the moment.")
+
+@app.on_message(filters.command("info"))
+async def info(client: Client, message: Message):
+    result = refresh()
+    if not result:
+        await message.reply_text("No match information available.")
+        return
+    
+    match = result['matches']
+    try:
+        text = (f"Match No: {match['mnum']}\n"
+                f"Match State: {match['mchstate']}\n"
+                f"Match Status: {match['status']}\n"
+                f"Toss: {match['toss']}\n"
+                f"Location: {match['venue_location']}")
+        await message.reply_text(text)
+    except KeyError:
+        await message.reply_text("Unable to fetch match details.")
+
+# Start the bot
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run()
     
