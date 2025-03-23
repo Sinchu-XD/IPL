@@ -81,16 +81,22 @@ async def upcoming_ipl_matches(client, message):
             return
 
         soup = BeautifulSoup(response.text, "html.parser")
-        matches = soup.find_all("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr")[:10]  # Get top 10 matches
+        
+        # Find all match blocks
+        match_blocks = soup.find_all("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr")
 
         upcoming_matches = []
-        for match in matches:
-            teams = match.find("h2").text.strip() if match.find("h2") else "Unknown Match"
-            details = match.find("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr").text.strip() if match.find("div", class_="cb-col cb-col-100 cb-ltst-wgt-hdr") else "Unknown Details"
-            upcoming_matches.append(f"{teams} - {details}")
+        for match in match_blocks:
+            teams = match.find("h2")
+            match_time = match.find("div", class_="cb-col-100 cb-col cb-col-100 cb-ltst-wgt-hdr")  
+            
+            if teams and match_time:
+                teams_text = teams.text.strip()
+                match_time_text = match_time.text.strip()
+                upcoming_matches.append(f"🏏 {teams_text} - 📅 {match_time_text}")
 
         if upcoming_matches:
-            await message.reply_text("Upcoming IPL Matches:\n" + "\n".join(upcoming_matches))
+            await message.reply_text("🏆 **Upcoming IPL Matches**:\n\n" + "\n".join(upcoming_matches[:10]))  # Top 10 matches
         else:
             await message.reply_text("No upcoming IPL matches found.")
 
