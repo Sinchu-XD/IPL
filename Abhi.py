@@ -1,112 +1,79 @@
 import asyncio
 import requests
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrofork import Client
+from pyrofork.types import Message
 
-# ✅ Telegram API Credentials
+# 🚀 Replace with your own API credentials
+API_KEY = "814d366d83msh97b8ba89155c2a8p140352jsn4c9a3b3bb565"
+API_URL = "https://api.cricapi.com/v1/currentMatches?apikey=" + API_KEY
+
+# 🏏 Telegram Bot Credentials
 API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
 BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
 
-# ✅ CricAPI Credentials
-CRIC_API_KEY = "9a7a66e7-f1d5-4899-ad9f-21a1a172f58e"
-MATCHES_API = f"https://api.cricapi.com/v1/currentMatches?apikey={CRIC_API_KEY}"
 
-# ✅ Set your target Telegram chat ID
-TARGET_CHAT_ID = -1002209504301  # Replace with your Telegram group/channel ID
-
-# ✅ Start PyroFork Client
+# 📲 Start Bot
 app = Client("IPLBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# ✅ Store last update to prevent duplicate messages
-last_ball = None  
-
-async def get_live_match():
-    """Fetches live IPL matches and returns match details."""
+# 📡 Function to fetch live match updates
+async def fetch_ipl_score():
     try:
-        response = requests.get(MATCHES_API)
+        response = requests.get(API_URL)
         data = response.json()
-
-        # ✅ Print API response for debugging
-        print("🔍 API Response:", data)
-
-        if "data" not in data or not data["data"]:
-            return None, "⚠️ No match data available!"
+        
+        if not data["data"]:
+            return "❌ No live IPL matches found!"
 
         for match in data["data"]:
-            print(f"🏏 Found Match: {match.get('name', 'Unknown')}")  # ✅ Debugging print
+            if "Indian Premier League" in match["name"]:
+                teams = f"{match['teamInfo'][0]['name']} 🆚 {match['teamInfo'][1]['name']}"
+                status = match.get("status", "Live")
+                score = ""
 
-            if "Indian Premier League" in match.get("name", ""):
-                return match, None  # ✅ Found IPL match
+                if "score" in match and match["score"]:
+                    for innings in match["score"]:
+                        score += f"🏏 **{innings['inning']}**: {innings['runs']}/{innings['wickets']} in {innings['overs']} overs\n"
 
-        return None, "❌ No live IPL matches found!"
+                return f"🏏 **LIVE IPL MATCH**\n📢 {teams}\n📊 {status}\n{score}"
+
+        return "❌ No live IPL matches found!"
+    
     except Exception as e:
-        return None, f"🚨 API Error: {str(e)}"
+        return f"⚠️ Error fetching score: {e}"
 
-
+# 🔄 Function to send automatic updates
 async def send_live_updates():
-    """Continuously fetches and sends ball-by-ball updates."""
-    global last_ball
+    chat_id = -1002209504301  # Replace with your group/channel ID
+    last_message = ""
+
     while True:
-        match, error = await get_live_match()
+        score_update = await fetch_ipl_score()
+
+        if score_update != last_message:
+            await app.send_message(chat_id, score_update)
+            last_message = score_update
         
-        if error:
-            print(error)  # ✅ Log errors
-            await asyncio.sleep(30)  # Retry in 30s
-            continue
+        await asyncio.sleep(30)  # ⏳ Check every 30 seconds
 
-        # ✅ Get match details
-        match_id = match["id"]
-        match_name = match["name"]
-        live_api = f"https://api.cricapi.com/v1/match_info?apikey={CRIC_API_KEY}&id={match_id}"
-
-        try:
-            response = requests.get(live_api)
-            data = response.json()
-
-            if "data" not in data or "score" not in data["data"]:
-                print("⚠️ No live score available!")
-                await asyncio.sleep(30)
-                continue
-            
-            score = data["data"]["score"]
-            commentary = data["data"].get("commentary", [])
-            
-            if not commentary:
-                print("⚠️ No live commentary found!")
-                await asyncio.sleep(30)
-                continue
-
-            # ✅ Get the latest ball update
-            latest_ball = commentary[0]
-
-            # ✅ Prevent duplicate messages
-            if latest_ball == last_ball:
-                await asyncio.sleep(10)
-                continue
-
-            last_ball = latest_ball  # ✅ Update last ball
-
-            # ✅ Prepare message
-            message = f"🏏 **{match_name}**\n\n"
-            message += f"📊 **Score:** {score}\n\n"
-            message += f"🎙️ **Last Ball:** {latest_ball}"
-
-            # ✅ Send update to Telegram
-            await app.send_message(TARGET_CHAT_ID, message)
-            print("✅ Update sent!")
-
-        except Exception as e:
-            print(f"🚨 Error fetching match info: {e}")
-
-        await asyncio.sleep(10)  # ✅ Check every 10 seconds
-
+# 🎯 Start Command (for manual check)
 @app.on_message(filters.command("start"))
-async def start_bot(client, message: Message):
-    """Starts the bot and live updates."""
-    await message.reply("✅ **IPL Bot is running!** Fetching live updates...")
-    await send_live_updates()
+async def start(client, message: Message):
+    await message.reply("🏏 **IPL Live Score Bot Started!**\nI will update scores automatically.")
+
+# 🎯 Manual Score Check
+@app.on_message(filters.command("score"))
+async def score(client, message: Message):
+    score_update = await fetch_ipl_score()
+    await message.reply(score_update)
+
+# 🚀 Main Function
+async def main():
+    print("🏏 IPL Bot is running...")
+    await app.start()
+    asyncio.create_task(send_live_updates())  # Start auto-updates
+    await idle()
 
 if __name__ == "__main__":
-    print("🚀 Starting IPL Live Score Bot...")
-    asyncio.run(send_live_updates())  # ✅ Run the auto-update function
+    asyncio.run(main())
+    
