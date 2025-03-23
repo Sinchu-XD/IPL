@@ -19,6 +19,7 @@ def fetch_ipl_score():
     try:
         response = requests.get(API_URL)
         data = response.json()
+        print(data)
         
         if "data" not in data or not data["data"]:
             return "❌ No live IPL matches found!"
