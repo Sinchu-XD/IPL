@@ -11,9 +11,9 @@ logging.basicConfig(level=logging.INFO)
 
 # Your API credentials
 API_ID = 25024171  # Get from my.telegram.org
- API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
- BOT_TOKEN = "7726535663:AAFVBNgn5z-gUK7Tr7XoKTS3bopW3OLBSPM"
- CHAT_ID = -4752836661
+API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
+BOT_TOKEN = "7726535663:AAFVBNgn5z-gUK7Tr7XoKTS3bopW3OLBSPM"
+CHAT_ID = -4752836661
 
 # Initialize Pyrogram Client
 app = Client("cricket_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
