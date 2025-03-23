@@ -16,10 +16,10 @@ MATCHES_API = f"https://api.cricapi.com/v1/currentMatches?apikey={CRICKET_API_KE
 COMMENTARY_API = "https://api.cricapi.com/v1/match_commentary?apikey={}&id={}"
 
 # 🔴 Target Telegram Chat (Replace with your group/channel ID)
-CHAT_ID = -100123456789  
+CHAT_ID = -1002209504301  
 
 # ⚡ Interval for auto-updates (in seconds)
-UPDATE_INTERVAL = 30  
+UPDATE_INTERVAL = 10
 
 latest_ball = ""
 
