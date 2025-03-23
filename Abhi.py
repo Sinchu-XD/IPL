@@ -27,16 +27,22 @@ async def get_live_match():
         response = requests.get(MATCHES_API)
         data = response.json()
 
+        # ✅ Print API response for debugging
+        print("🔍 API Response:", data)
+
         if "data" not in data or not data["data"]:
             return None, "⚠️ No match data available!"
 
         for match in data["data"]:
+            print(f"🏏 Found Match: {match.get('name', 'Unknown')}")  # ✅ Debugging print
+
             if "Indian Premier League" in match.get("name", ""):
                 return match, None  # ✅ Found IPL match
 
         return None, "❌ No live IPL matches found!"
     except Exception as e:
         return None, f"🚨 API Error: {str(e)}"
+
 
 async def send_live_updates():
     """Continuously fetches and sends ball-by-ball updates."""
