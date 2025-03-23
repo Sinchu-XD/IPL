@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 
 API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
-BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
+BOT_TOKEN = "7726535663:AAGqwmKwB2RYT3wiFu0408qAayxBp1-AMzU"
 
 
 
