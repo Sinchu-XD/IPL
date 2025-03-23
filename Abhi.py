@@ -116,5 +116,6 @@ async def main():
     await send_live_updates()  # Start auto-updates
 
 
-if name == "main":
+# ✅ FIXED: Corrected the __name__ condition
+if __name__ == "__main__":
     asyncio.run(main())
