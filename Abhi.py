@@ -82,4 +82,4 @@ async def main():
     await asyncio.Future()  # Keep the bot running
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run(main())
