@@ -65,7 +65,7 @@ async def send_welcome(client, message):
     else:
         await message.reply_text("No Live coverage going on!! \n-----BYE----")
 
-IPL_SCHEDULE_URL = "https://www.cricbuzz.com/cricket-series/7548/indian-premier-league-2024/matches"
+IPL_SCHEDULE_URL = "https://www.cricbuzz.com/cricket-series/7548/indian-premier-league-2025/matches"
 
 @app.on_message(filters.command("ipl"))
 async def upcoming_ipl_matches(client, message):
