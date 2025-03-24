@@ -9,7 +9,7 @@ import json
 API_KEY = "9a7a66e7-f1d5-4899-ad9f-21a1a172f58e"
 API_ID = 25024171  # Get from my.telegram.org
 API_HASH = "7e709c0f5a2b8ed7d5f90a48219cffd3"
-BOT_TOKEN = "7726535663:AAGalIgbZaBHRGhbAc0fdWmSithGcRjdEzg"
+BOT_TOKEN = "7726535663:AAFVBNgn5z-gUK7Tr7XoKTS3bopW3OLBSPM"
 API_URL = "https://api.cricapi.com/v1"
 
 
