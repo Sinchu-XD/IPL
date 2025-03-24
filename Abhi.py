@@ -14,7 +14,7 @@ API_URL = "https://api.cricapi.com/v1"
 
 
 # Initialize the Pyrogram client
-app = Client("IPLBt", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN) #replace with your api id and hash
+app = Client("IPLBt", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)#replace with your api id and hash
 
 async def get_ipl_matches():
     """Fetches list of IPL matches from the API."""
