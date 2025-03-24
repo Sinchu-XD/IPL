@@ -70,6 +70,11 @@ async def start_command(client: Client, message: Message):
     """Handles the /start command."""
     await message.reply_text("Welcome to the IPL Bot! Use /ipl to get a list of IPL matches.")
 
+@app.on_message(filters.command("test"))
+async def test_command(client: Client, message: Message):
+    await message.reply_text("Bot is responding!")
+
+
 async def main():
     """Main function to start the bot."""
     await app.start()
